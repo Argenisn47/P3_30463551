@@ -1,0 +1,17 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: #FFFFFF;
+}
+
+.xd {
+    margin-top: 2rem;
+    width: 70%;
+}
+
+.f {
+    margin-top: 2rem;
+    width: 300px;
+}
