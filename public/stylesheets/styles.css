@@ -104,3 +104,26 @@ form {
    }
 }
 
+
+
+div.valoracion {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+  }
+  
+  div.valoracion input {
+    position: absolute;
+    top: -100px;
+    color: #dd4;
+  }
+  
+  div.valoracion label {
+    float: right;
+
+    width: 23px;
+    font-size: 25px;
+    cursor: pointer;
+    color: #dd4;
+  }
+  

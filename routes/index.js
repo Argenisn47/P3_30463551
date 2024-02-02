@@ -187,18 +187,18 @@ router.post("/login", (req, res) => {
 
 
 router.get("/", (req, res) => {
-  db.all(`SELECT * FROM products`, [], (err, queryProduct) => {
     db.all(`SELECT * FROM categorys`, [], (err, queryCategory) => {
-      db.all(`SELECT * FROM images`, [], (err, queryImg) => {
+      db.all(`SELECT products.*, images.url, AVG(calificacion.rating) as avg_rating FROM products LEFT JOIN images ON products.id = images.producto_id LEFT JOIN calificacion ON products.id = calificacion.producto_id GROUP BY products.id;`, [], (err, queryImg) => {
+        console.log('Products: ',queryImg)
         res.render('index', {
-          Product: queryProduct,
+          Product: queryImg,
           Productcategory: queryCategory,
           Productimg: queryImg
         })
       })
     })
   })
-})
+
 
 
 router.get('/:id', (req, res) => {
@@ -235,10 +235,11 @@ router.get('/categoryid/:id', (req, res) => {
 
 
 router.post('/filtro', (req, res) => {
-  const { name, estado, envio } = req.body;
-  const sqlQuery = "SELECT products.*, images.url FROM products LEFT JOIN images ON products.id = images.producto_id WHERE products.nombre = ? OR products.estado = ? OR products.envio = ?"
+  const { name, estado, envio, rating } = req.body;
+  console.log(req.body)
+  const sqlQuery = "SELECT products.*, images.url, AVG(calificacion.rating) as avg_rating FROM products LEFT JOIN images ON products.id = images.producto_id LEFT JOIN calificacion ON products.id = calificacion.producto_id WHERE (products.nombre = ? OR products.estado = ? OR products.envio = ? OR calificacion.rating = ?) GROUP BY products.id;"
   const sqlCategory = "SELECT * FROM categorys";
-  db.all(sqlQuery, [name, estado, envio], (err, product) => {
+  db.all(sqlQuery, [name, estado, envio, rating], (err, product) => {
     console.log(product)
     db.all(sqlCategory, [], (err, category) => {
       res.render('index', {
@@ -329,7 +330,7 @@ router.post('/client/registercliente', async (req, res) => {
   const user = req.body.user;
   const pass = req.body.password;
   const nameClient = user;
-  const direccion = req.body.direccion
+  const direccion = req.body.direccion;
   const secretkey = "6LeDoU0pAAAAAIBcBUhaf8sIyoF2RJojZ-blAmTI";
   const gRecaptchaResponse = req.body['g-recaptcha-response'];
   const response = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secretkey}&response=${gRecaptchaResponse}`, {
@@ -406,8 +407,8 @@ router.post('/client/carrito/buy/:id', async (req, res) => {
         "expiration-year": año,
         "full-name": "APPROVED",
         currency: "USD",
-        description: "Transaction Successfull",
-        reference: "payment_id:30"
+        description: "...",
+        reference: "payment_id:50"
       })
     });
     const data = await response.json();
@@ -418,7 +419,39 @@ router.post('/client/carrito/buy/:id', async (req, res) => {
         if (err) {
           console.log(err)
         } else {
-          res.redirect('/');
+          db.get('SELECT * FROM clientes WHERE id = ?', [client_id], (err, row) => {
+            if (err); console.log(err);
+            /*Confirmacion*/
+            console.log(row)
+            const transporter = nodemailer.createTransport({
+              service: 'outlook',
+              port: 587,
+              tls: {
+                ciphers: "SSLv3",
+                rejectUnauthorized: false,
+              },
+              auth: {
+                user: process.env.EMAIL,
+                pass: process.env.EMAIL_PW,
+              },
+            });
+
+            const mailOptions = {
+              from: 'dfwaaaaaaaaaaaaaaa@outlook.com',
+              to: row.usuario,
+              subject: '¡Confirmacion de su compra!',
+              html: '<h1>¡Hola!</h1><p>Su compra ah finalizado correctamente</p>' // html body
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+              if (error) {
+                console.log(error);
+              } else {
+                console.log('Email sent: ' + info.response);
+              }
+            });
+          })
+          res.redirect('/client/calificar/' + id);
         }
       })
     }
@@ -445,10 +478,103 @@ router.get('/data/clients', (req, res) => {
   })
 });
 
+
 router.get('/client/logout', async (req, res) => {
   res.clearCookie("jwt");
   return res.redirect("/client/logincliente");
 });
+
+
+
+
+
+/*Task 4 coding*/
+router.get('/client/calificar/:id', (req, res) => {
+  const { id } = req.params;
+  db.get(`SELECT * FROM products WHERE id = ?`, id, (err, products) => {
+    db.all(`SELECT * FROM categorys`, [], (err, categorys) => {
+      db.get(`SELECT * FROM images WHERE producto_id = ?`, id, (err, images) => {
+        res.render('calificar', {
+          Product: products,
+          Productcategory: categorys,
+          Productimg: images
+        })
+      })
+    })
+  })
+})
+
+
+router.post('/client/calificar/:id', async (req, res) => {
+  const { id } = req.params;
+  const { rating } = req.body;
+  const tokenAuthorized = await promisify(jwt.verify)(req.cookies.jwt, 'token');
+  const idClient = tokenAuthorized.id;
+  const sql = "INSERT INTO calificacion(producto_id,user_id,rating) VALUES(?,?,?)";
+  db.run(sql, [id, idClient, rating], (err, row) => {
+    if (err) console.log(err);
+    res.redirect('/');
+  })
+})
+
+
+/*Recovery password page*/
+router.get('/client/recoverpassword', (req, res) => {
+  res.render('recoverpassword');
+})
+
+
+/*Method post in the form in page*/
+router.post('/client/recoverpassword', (req, res) => {
+  const { user } = req.body;
+  const userEmail = process.env.EMAIL;
+  const userPassword = process.env.EMAIL_PW;
+  db.all(`SELECT * FROM clientes WHERE email = ?`, [user], (err, row) => {
+    if (row.length == 0) {
+      res.send('No se encuentra el email');
+    }
+    else {
+      const transporter = nodemailer.createTransport({
+        service: 'outlook',
+        port: 587,
+        tls: {
+          ciphers: "SSLv3",
+          rejectUnauthorized: false,
+        },
+        auth: {
+          user: userEmail,
+          pass: userPassword,
+        },
+      });
+
+      const mailOptions = {
+        from: userEmail,
+        to: user,
+        subject: 'Restablecimiento de contraseña',
+        html: `<h1>¡Hola!</h1><p>Correo:${user}</p><p>Contraseña:${row[0].password}`
+        // html body
+      };
+
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+
+        }
+      });
+    }
+  })
+}
+)
+
+
+
+
+
+
+
+
 
 
 
