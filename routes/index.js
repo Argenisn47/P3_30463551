@@ -11,34 +11,7 @@ const { promisify } = require('util');
 const db = new sqlite3.Database(database, (err) => {
   if (err) return err;
 });
-require('dotenv').config()
-/*
-const img = "CREATE TABLE images (id INTEGER PRIMARY KEY AUTOINCREMENT,producto_id INTEGER NOT NULL,url TEXT NOT NULL,destacado BOOLEAN NOT NULL,FOREIGN KEY (producto_id) REFERENCES products (id));"
-const category = "CREATE TABLE categorys (id INTEGER PRIMARY KEY AUTOINCREMENT,nombre VARCHAR(200) NOT NULL);";
-const product = "CREATE TABLE products (id INTEGER PRIMARY KEY AUTOINCREMENT,nombre VARCHAR(200) NOT NULL,codigo INT(100) NOT NULL,precio NUMERIC NOT NULL,estado TEXT NOT NULL,envio TEXT NOT NULL,descripcion TEXT NOT NULL,categoria_id INTEGER NOT NULL,FOREIGN KEY (categoria_id) REFERENCES categorys (id))";
-const calificacion = "CREATE TABLE calificacion (producto_id INTEGER NOT NULL,user_id INTEGER NOT NULL,rating INTEGER NOT NULL)"
-const Cart = "CREATE TABLE ventas(cliente_id TEXT NOT NULL,producto_id TEXT NOT NULL, cantidad TEXT NOT NULL,total_pagado TEXT NOT NULL,fecha TEXT NOT NULL,ip_cliente VARCHAR(255),FOREIGN KEY (cliente_id) REFERENCES clientes(id),FOREIGN KEY (producto_id) REFERENCES productos(id));"
-
-db.run(calificacion, err => {
-  err ? err : console.log('calificacion')
-})
-db.run(Cart, err => {
-  err ? err : console.log('calificacion')
-})
-
-
-
-db.run(category, (err) => {
-  db.run(img, (err) => {
-    db.run(product, (err) => {
-      if (err) {
-        console.log(err)
-      }
-    })
-  })
-})
-*/
-
+require('dotenv').config();
 
 /*Vista interfaz administrativa*/
 router.get("/adminInterface", (req, res) => {
@@ -527,8 +500,6 @@ router.get('/client/recoverpassword', (req, res) => {
 /*Method post in the form in page*/
 router.post('/client/recoverpassword', (req, res) => {
   const { user } = req.body;
-  const userEmail = process.env.EMAIL;
-  const userPassword = process.env.EMAIL_PW;
   db.all(`SELECT * FROM clientes WHERE email = ?`, [user], (err, row) => {
     if (row.length == 0) {
       res.send('No se encuentra el email');
@@ -542,13 +513,13 @@ router.post('/client/recoverpassword', (req, res) => {
           rejectUnauthorized: false,
         },
         auth: {
-          user: userEmail,
-          pass: userPassword,
+          user: process.env.EMAIL,
+          pass: process.env.EMAIL_PW
         },
       });
 
       const mailOptions = {
-        from: userEmail,
+        from: process.env.EMAIL,
         to: user,
         subject: 'Restablecimiento de contraseña',
         html: `<h1>¡Hola!</h1><p>Correo:${user}</p><p>Contraseña:${row[0].password}`
@@ -567,17 +538,5 @@ router.post('/client/recoverpassword', (req, res) => {
   })
 }
 )
-
-
-
-
-
-
-
-
-
-
-
-
 
 module.exports = router;
