@@ -437,7 +437,7 @@ router.post('/client/carrito/buy/:id', async (req, res) => {
             });
 
             const mailOptions = {
-              from: 'dfwaaaaaaaaaaaaaaa@outlook.com',
+              from: process.env.EMAIL,
               to: row.usuario,
               subject: '¡Confirmacion de su compra!',
               html: '<h1>¡Hola!</h1><p>Su compra ah finalizado correctamente</p>' // html body
