@@ -42,10 +42,11 @@ form {
 
 .size {
     margin-top: 2rem;
-    width: 50%;
+    width: 45%;
     display:flex;
     gap: 30px;
     background-color: white;
+    border-radius: 40px;
 }
 
 

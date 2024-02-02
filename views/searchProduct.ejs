@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/stylesheets/styles.css">
     <title>Articles</title>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg bg-body-tertiary" style="width: 100%;">
         <div class="container-fluid">
@@ -56,7 +57,7 @@
     </nav>
 
     <div class="size">
-        <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center" >
+        <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center" style="width: 100%;">
 
             <div class="col t">
                 <div class="cards t flex-column">
@@ -68,11 +69,17 @@
                         <h5 class="card-title">Nombre: <%=Product.nombre %>
                         </h5>
                         <span class="card-text">Software: <%=Product.software %></span><br>
-                        <span class="card-text">Estado: <%=Product.estado %></span>
-                        <span class="card-text">Envio: <%=Product.envio %></span>
-                        <p class="card-text">Precio: <%=Product.precio %>$</p>
+                        <span class="card-text">Estado: <%=Product.estado %></span><br>
+                        <span class="card-text">Envio: <%=Product.envio %></span><br>
+                        <span class="card-text">Precio: <%=Product.precio %>$</span><br>
                         <span class="card-text">Descripcion: <%=Product.descripcion %></span><br><br>
-                        <a href=""><button class="btn btn-success t">Comprar</button></a>
+                        <form action="/client/carrito/<%=Product.id %>" method="POST">
+                            <p class="cantidad">
+                                Cantidad: <input type="number" name="cantidad" id="" min="1" required>
+                                <input type="hidden" name="precio" value="<%=Product.precio %>">
+                            </p>
+                           <button class="btn btn-success t">Comprar</button>
+                        </form>
                     </div>
                 </div>
                 <br>
